@@ -122,11 +122,13 @@ JState jstate = WAITING;
 
 void setup() {
   initialise();
+  calibrate();
   setupEncoder0();
   setupEncoder1();
 }
 
 void loop() {
+  Serial.println(jstate);
   if (jstate == WAITING) {
     if (digitalRead(17) == LOW) {
       jstate = RUNNING;
