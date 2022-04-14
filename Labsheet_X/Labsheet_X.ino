@@ -63,10 +63,10 @@ void initialise() {
 
 void calibrate() {
   line_sensors.calibrate_light();
-  motors.set_motors(20, -20);
-  delay(5000);
-  motors.set_motors(0, 0);
-  delay(5000);
+  analogWrite(6, 30);
+  delay(500);
+  analogWrite(6, 0);
+  delay(3000);
   line_sensors.calibrate_dark();
 }
 
@@ -128,12 +128,12 @@ void setup() {
 }
 
 void loop() {
-  Serial.println(jstate);
   if (jstate == WAITING) {
     if (digitalRead(17) == LOW) {
       jstate = RUNNING;
       r_wheel_pid.reset();
       l_wheel_pid.reset();
+      Serial.println("Button pressed moving to RUNNING");
     }
   } else if (jstate == RUNNING) {
     r_wheel_pid.attempt_update(0.5, r_wheel_velocity);
@@ -142,15 +142,20 @@ void loop() {
     motors.set_left_motor(l_wheel_pid.feedback_signal);
     
     kinematics.attempt_update();
+    line_sensors.attempt_update();
   
     if (line_sensors.is_on_line()) {
       jstate = TRANSITION;
+      Serial.println("Detected line moving to TRANSITION");
     }
   } else if (jstate == TRANSITION) {
+    line_sensors.attempt_update();
     if (!line_sensors.is_on_line()) {
       jstate = RECORDING;
+      Serial.println("Left line moving to RECORDING");
     }
   } else if (jstate == RECORDING) {
+    line_sensors.attempt_update();
     r_wheel_pid.attempt_update(0.5, r_wheel_velocity);
     l_wheel_pid.attempt_update(0.5, l_wheel_velocity);
     motors.set_right_motor(r_wheel_pid.feedback_signal);
@@ -160,6 +165,7 @@ void loop() {
     results.attempt_update(r_wheel_pid.feedback_signal, r_wheel_velocity);
     if (line_sensors.is_on_line()) {
       jstate = STOPPED;
+      Serial.println("Hit line moving to STOPPED");
     }
     
   } else if (jstate == STOPPED) {
@@ -171,8 +177,6 @@ void loop() {
 
 
   if (micros() - last_update > 200000) {
-    Serial.println("UPDATING");
-    Serial.println(count_e0);
     e0_change = count_e0 - last_e0;
     e1_change = count_e1 - last_e1;
     loop_interval = micros() - last_update;
@@ -181,7 +185,6 @@ void loop() {
     last_e1 = count_e1;
     r_wheel_velocity = -1000 * (e0_change / loop_interval);
     l_wheel_velocity = -1000 * (e1_change / loop_interval);
-    Serial.println(r_wheel_velocity);
   }
   
 }

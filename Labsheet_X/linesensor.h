@@ -94,6 +94,18 @@ class LineSensor_c {
       sensor_range[0] = left_readings[4] - sensor_offset[0];
       sensor_range[1] = centre_readings[4] - sensor_offset[1];
       sensor_range[2] = right_readings[4] - sensor_offset[2];
+
+      Serial.println("Offset");
+      Serial.println(sensor_offset[0]);
+      Serial.println(sensor_offset[1]);
+      Serial.println(sensor_offset[2]);
+      Serial.println("");
+
+      Serial.println("Range");
+      Serial.println(sensor_range[0]);
+      Serial.println(sensor_range[1]);
+      Serial.println(sensor_range[2]);
+      Serial.println("");
     }
 
     void adjust_readings() {
@@ -103,10 +115,10 @@ class LineSensor_c {
     }
 
     bool is_on_line() {
-      bool on_line = true;
+      bool on_line = false;
       for (int i = 0; i < 3; i++) {
-        unsigned long mid_value = sensor_offset[i]*2 + sensor_range[i];
-        if (readings[i] < mid_value) on_line = false;
+        double mid_value = (double)sensor_offset[i] + (double)sensor_range[i]/(double)2.0;
+        if (readings[i] > mid_value) on_line = true;
       }
       return on_line;
     }
